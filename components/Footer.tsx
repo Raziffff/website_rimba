@@ -17,7 +17,7 @@ const QUICK_LINKS = [
   { name: "Agenda", href: "/agenda" },
   { name: "Berita", href: "/berita" },
   { name: "Galeri", href: "/galeri" },
-  { name: "Struktur", href: "/struktur" },
+  { name: "Tentang", href: "/tentang" },
   { name: "Kontak", href: "/kontak" },
 ];
 
