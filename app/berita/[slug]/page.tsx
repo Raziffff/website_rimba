@@ -120,7 +120,7 @@ export default async function BeritaDetailPage({ params }: BeritaDetailPageProps
             <span>Lihat Artikel Berita Lainnya</span>
           </Link>
           <ShareButton
-            url={`${process.env.NEXT_PUBLIC_SITE_URL}/berita/${article.slug}`}
+            slug={article.slug}
             title={article.title}
           />
         </div>

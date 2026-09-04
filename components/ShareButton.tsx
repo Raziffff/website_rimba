@@ -1,15 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Copy, Check, MessageCircle, Share2 } from "lucide-react";
 
 interface ShareButtonProps {
-  url: string;
+  slug: string;
   title: string;
 }
 
-export default function ShareButton({ url, title }: ShareButtonProps) {
+export default function ShareButton({ slug, title }: ShareButtonProps) {
   const [copied, setCopied] = useState(false);
+  const [url, setUrl] = useState("");
+
+  // Ambil URL dari browser secara otomatis, bukan dari env
+  useEffect(() => {
+    setUrl(window.location.href);
+  }, []);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
