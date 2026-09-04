@@ -93,7 +93,6 @@ export default async function BeritaDetailPage({ params }: BeritaDetailPageProps
             height={600}
             className="w-full h-auto object-contain"
             priority
-            unoptimized
           />
         </div>
 
