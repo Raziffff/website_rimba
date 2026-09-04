@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, User, Clock } from "lucide-react";
 import { getBeritaBySlug } from "@/app/actions/berita";
 import AISummarizerCard from "@/components/AISummarizerCard";
+import ShareButton from "@/components/ShareButton";
 
 export const revalidate = 60;
 
@@ -110,7 +111,7 @@ export default async function BeritaDetailPage({ params }: BeritaDetailPageProps
         </article>
 
         {/* Footer Navigation */}
-        <div className="mt-14 pt-8 border-t border-border flex items-center justify-between">
+        <div className="mt-14 pt-8 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <Link
             href="/berita"
             className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:text-primary-dark transition-colors"
@@ -118,6 +119,10 @@ export default async function BeritaDetailPage({ params }: BeritaDetailPageProps
             <ArrowLeft className="w-4 h-4" />
             <span>Lihat Artikel Berita Lainnya</span>
           </Link>
+          <ShareButton
+            url={`${process.env.NEXT_PUBLIC_SITE_URL}/berita/${article.slug}`}
+            title={article.title}
+          />
         </div>
 
       </div>
