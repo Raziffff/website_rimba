@@ -85,12 +85,13 @@ export default async function BeritaDetailPage({ params }: BeritaDetailPageProps
         </div>
 
         {/* Cover Image */}
-        <div className="relative aspect-video w-full rounded-3xl overflow-hidden mb-6 bg-background shadow-md border border-border/60">
+        <div className="relative w-full rounded-3xl overflow-hidden mb-6 bg-background shadow-md border border-border/60">
           <Image
             src={article.image || "https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?q=80&w=800&auto=format&fit=crop"}
             alt={article.title}
-            fill
-            className="object-cover"
+            width={800}
+            height={600}
+            className="w-full h-auto object-contain"
             priority
             unoptimized
           />
