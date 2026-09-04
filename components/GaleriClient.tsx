@@ -128,6 +128,7 @@ export default function GaleriClient({ initialPhotos }: GaleriClientProps) {
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 33vw, 25vw"
                   className="object-cover group-hover:scale-108 transition-transform duration-500"
+                  unoptimized
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-5 text-white">
                   <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary text-white w-max mb-2">

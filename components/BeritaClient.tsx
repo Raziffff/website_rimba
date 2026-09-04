@@ -146,6 +146,7 @@ export default function BeritaClient({ initialArticles }: BeritaClientProps) {
                       fill
                       sizes="(max-width: 1024px) 100vw, 60vw"
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                      unoptimized
                     />
                     <div className="absolute inset-0 bg-linear-to-t from-black/50 via-transparent to-transparent lg:hidden" />
                   </div>
@@ -203,6 +204,7 @@ export default function BeritaClient({ initialArticles }: BeritaClientProps) {
                         fill
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         className="object-cover object-center transform group-hover:scale-105 transition-transform duration-500"
+                        unoptimized
                       />
                       <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
 
