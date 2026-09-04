@@ -91,12 +91,17 @@ export async function createBerita(formData: {
   content: string;
   image: string;
   author?: string;
+  customSlug?: string;
 }) {
   try {
-    const slug = formData.title
+    const autoSlug = formData.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
+
+    const slug = formData.customSlug
+      ? formData.customSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")
+      : autoSlug;
 
     const newBerita = await prisma.berita.create({
       data: {

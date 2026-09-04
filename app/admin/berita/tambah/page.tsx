@@ -19,7 +19,13 @@ export default function AdminBeritaTambahPage() {
     content: "",
     image: "",
     author: "Admin RIMBA",
+    customSlug: "",
   });
+
+  // Auto-generate slug preview dari judul
+  const slugPreview = formData.customSlug
+    ? formData.customSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")
+    : formData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +33,10 @@ export default function AdminBeritaTambahPage() {
     setError(null);
 
     try {
-      const res = await createBerita(formData);
+      const res = await createBerita({
+        ...formData,
+        customSlug: formData.customSlug,
+      });
       if (res.success) {
         router.push("/admin/berita");
       } else {
@@ -116,6 +125,24 @@ export default function AdminBeritaTambahPage() {
             folder="berita"
             label="Gambar Cover Berita"
           />
+
+          {/* Custom Slug */}
+          <div>
+            <label className="block font-bold text-text mb-1.5">
+              Custom Slug (URL Pendek)
+              <span className="ml-2 text-[11px] font-normal text-text/50">— kosongkan untuk generate otomatis dari judul</span>
+            </label>
+            <input
+              type="text"
+              placeholder="contoh: pengajian-september"
+              value={formData.customSlug}
+              onChange={(e) => setFormData({ ...formData, customSlug: e.target.value })}
+              className="w-full px-4 py-3 text-xs sm:text-sm rounded-xl bg-background border border-border focus:outline-none focus:border-primary text-text"
+            />
+            <p className="mt-1.5 text-[11px] text-text/50">
+              Preview URL: <span className="font-bold text-primary">/berita/{slugPreview || "..."}</span>
+            </p>
+          </div>
 
           <div>
             <label className="block font-bold text-text mb-1.5">Ringkasan / Excerpt *</label>
