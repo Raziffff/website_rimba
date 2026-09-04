@@ -144,13 +144,19 @@ export async function updateBerita(
     excerpt: string;
     content: string;
     image: string;
+    customSlug?: string;
   }
 ) {
   try {
+    const slug = formData.customSlug
+      ? formData.customSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")
+      : formData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
+
     const updated = await prisma.berita.update({
       where: { id },
       data: {
         title: formData.title,
+        slug,
         category: formData.category,
         excerpt: formData.excerpt,
         content: formData.content,

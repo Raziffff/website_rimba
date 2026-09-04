@@ -28,7 +28,13 @@ export default function AdminBeritaEditPage({ params }: AdminBeritaEditPageProps
     content: "",
     image: "",
     author: "Admin RIMBA",
+    customSlug: "",
   });
+
+  // Slug preview
+  const slugPreview = formData.customSlug
+    ? formData.customSlug.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "")
+    : formData.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)+/g, "");
 
   useEffect(() => {
     async function fetchArticle() {
@@ -43,6 +49,7 @@ export default function AdminBeritaEditPage({ params }: AdminBeritaEditPageProps
             content: res.data.content,
             image: res.data.image,
             author: res.data.author,
+            customSlug: res.data.slug || "",
           });
         } else {
           setError(res.error || "Berita tidak ditemukan.");
@@ -157,6 +164,24 @@ export default function AdminBeritaEditPage({ params }: AdminBeritaEditPageProps
               folder="berita"
               label="Gambar Cover Berita"
             />
+
+            {/* Custom Slug */}
+            <div>
+              <label className="block font-bold text-text mb-1.5">
+                Custom Slug (URL Pendek)
+                <span className="ml-2 text-[11px] font-normal text-text/50">— edit untuk mengubah URL berita</span>
+              </label>
+              <input
+                type="text"
+                placeholder="contoh: pengajian-september"
+                value={formData.customSlug}
+                onChange={(e) => setFormData({ ...formData, customSlug: e.target.value })}
+                className="w-full px-4 py-3 text-xs sm:text-sm rounded-xl bg-background border border-border focus:outline-none focus:border-primary text-text"
+              />
+              <p className="mt-1.5 text-[11px] text-text/50">
+                Preview URL: <span className="font-bold text-primary">/berita/{slugPreview || "..."}</span>
+              </p>
+            </div>
 
             <div>
               <label className="block font-bold text-text mb-1.5">Ringkasan / Excerpt *</label>
