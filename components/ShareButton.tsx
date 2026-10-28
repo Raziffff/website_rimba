@@ -14,8 +14,13 @@ export default function ShareButton({ slug, title }: ShareButtonProps) {
 
   // Ambil URL dari browser secara otomatis, bukan dari env
   useEffect(() => {
-    setUrl(window.location.href);
+    if (typeof window !== "undefined") {
+      setUrl(window.location.href);
+    }
   }, []);
+
+  // slug is kept for props compatibility
+  const _slug = slug;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
