@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Plus,
   RefreshCw,
@@ -9,7 +9,18 @@ import {
   TrendingUp,
   TrendingDown,
   Wallet,
+  ChartLine,
 } from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 import { getKeuangan, createKeuangan } from "@/app/actions/keuangan";
 
 interface TransaksiItem {
@@ -32,6 +43,19 @@ interface KeuanganSummary {
 const formatRp = (n: number) =>
   `Rp ${n.toLocaleString("id-ID")}`;
 
+const MONTH_LABELS = [
+  "Jan", "Feb", "Mar", "Apr", "Mei", "Jun",
+  "Jul", "Agu", "Sep", "Okt", "Nov", "Des",
+];
+
+// Format singkat untuk sumbu Y grafik agar tidak melebar
+const formatRpShort = (n: number) => {
+  if (Math.abs(n) >= 1_000_000_000) return `Rp ${(n / 1_000_000_000).toFixed(1)} M`;
+  if (Math.abs(n) >= 1_000_000) return `Rp ${(n / 1_000_000).toFixed(1)} jt`;
+  if (Math.abs(n) >= 1_000) return `Rp ${Math.round(n / 1_000)} rb`;
+  return `Rp ${n}`;
+};
+
 export default function AdminKeuanganPage() {
   const [data, setData] = useState<KeuanganSummary>({
     transactions: [],
@@ -43,6 +67,7 @@ export default function AdminKeuanganPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filterType, setFilterType] = useState<"ALL" | "PEMASUKAN" | "PENGELUARAN">("ALL");
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
   const [formData, setFormData] = useState({
     type: "PEMASUKAN" as "PEMASUKAN" | "PENGELUARAN",
@@ -108,9 +133,60 @@ export default function AdminKeuanganPage() {
     }
   };
 
-  const filtered = filterType === "ALL"
-    ? data.transactions
-    : data.transactions.filter((t) => t.type === filterType);
+  // Daftar tahun yang bisa dipilih (dari data transaksi + tahun berjalan)
+  const availableYears = useMemo(() => {
+    const years = new Set<number>();
+    data.transactions.forEach((t) => years.add(new Date(t.date).getFullYear()));
+    years.add(new Date().getFullYear());
+    return Array.from(years).sort((a, b) => b - a);
+  }, [data.transactions]);
+
+  // Set default ke tahun terbaru yang memiliki data
+  useEffect(() => {
+    if (data.transactions.length === 0) return;
+    const yearsWithData = Array.from(
+      new Set(data.transactions.map((t) => new Date(t.date).getFullYear()))
+    ).sort((a, b) => b - a);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedYear((prev) => (yearsWithData.includes(prev) ? prev : yearsWithData[0]));
+  }, [data.transactions]);
+
+  // Transaksi pada tahun terpilih
+  const yearTransactions = useMemo(
+    () => data.transactions.filter((t) => new Date(t.date).getFullYear() === selectedYear),
+    [data.transactions, selectedYear]
+  );
+
+  // Total tahun terpilih (untuk kartu ringkasan)
+  const yearTotals = useMemo(() => {
+    const pemasukan = yearTransactions
+      .filter((t) => t.type === "PEMASUKAN")
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    const pengeluaran = yearTransactions
+      .filter((t) => t.type === "PENGELUARAN")
+      .reduce((acc, curr) => acc + curr.amount, 0);
+    return { pemasukan, pengeluaran, saldo: pemasukan - pengeluaran };
+  }, [yearTransactions]);
+
+  // Data agregat per bulan untuk grafik
+  const chartData = useMemo(() => {
+    const months = MONTH_LABELS.map((label) => ({
+      bulan: label,
+      pemasukan: 0,
+      pengeluaran: 0,
+    }));
+    yearTransactions.forEach((t) => {
+      const monthIndex = new Date(t.date).getMonth();
+      if (t.type === "PEMASUKAN") months[monthIndex].pemasukan += t.amount;
+      else months[monthIndex].pengeluaran += t.amount;
+    });
+    return months;
+  }, [yearTransactions]);
+
+  const filtered = useMemo(
+    () => (filterType === "ALL" ? yearTransactions : yearTransactions.filter((t) => t.type === filterType)),
+    [yearTransactions, filterType]
+  );
 
   return (
     <div className="space-y-6">
@@ -141,9 +217,9 @@ export default function AdminKeuanganPage() {
             <span className="text-xs font-bold opacity-80">Saldo Kas</span>
           </div>
           <div className="text-2xl font-black">
-            {isLoading ? "..." : formatRp(data.saldoKas)}
+            {isLoading ? "..." : formatRp(yearTotals.saldo)}
           </div>
-          <p className="text-xs opacity-70 mt-1">Dana tersedia saat ini</p>
+          <p className="text-xs opacity-70 mt-1">Saldo tahun {selectedYear}</p>
         </div>
         <div className="p-6 rounded-3xl bg-emerald-50 border border-emerald-200 text-emerald-800">
           <div className="flex items-center gap-3 mb-3">
@@ -153,9 +229,9 @@ export default function AdminKeuanganPage() {
             <span className="text-xs font-bold">Total Pemasukan</span>
           </div>
           <div className="text-2xl font-black">
-            {isLoading ? "..." : formatRp(data.totalPemasukan)}
+            {isLoading ? "..." : formatRp(yearTotals.pemasukan)}
           </div>
-          <p className="text-xs opacity-70 mt-1">Kumulatif pemasukan kas</p>
+          <p className="text-xs opacity-70 mt-1">Total pemasukan tahun {selectedYear}</p>
         </div>
         <div className="p-6 rounded-3xl bg-red-50 border border-red-200 text-red-800">
           <div className="flex items-center gap-3 mb-3">
@@ -165,9 +241,9 @@ export default function AdminKeuanganPage() {
             <span className="text-xs font-bold">Total Pengeluaran</span>
           </div>
           <div className="text-2xl font-black">
-            {isLoading ? "..." : formatRp(data.totalPengeluaran)}
+            {isLoading ? "..." : formatRp(yearTotals.pengeluaran)}
           </div>
-          <p className="text-xs opacity-70 mt-1">Kumulatif pengeluaran kas</p>
+          <p className="text-xs opacity-70 mt-1">Total pengeluaran tahun {selectedYear}</p>
         </div>
       </div>
 
@@ -177,6 +253,101 @@ export default function AdminKeuanganPage() {
           <span>{error}</span>
         </div>
       )}
+
+      {/* Grafik Pemasukan & Pengeluaran */}
+      <div className="bg-surface border border-border/80 rounded-3xl p-6 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-base font-bold text-text flex items-center gap-2">
+              <ChartLine className="w-5 h-5 text-primary" />
+              <span>Grafik Pemasukan &amp; Pengeluaran</span>
+            </h3>
+            <p className="text-xs text-text/60 mt-0.5">
+              Rekap bulanan tahun {selectedYear}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <label htmlFor="filter-tahun" className="text-xs font-bold text-text/70">
+              Tahun
+            </label>
+            <select
+              id="filter-tahun"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(Number(e.target.value))}
+              className="px-4 py-2.5 text-xs font-bold rounded-xl bg-background border border-border focus:outline-none focus:border-primary text-text cursor-pointer"
+            >
+              {availableYears.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-16 gap-3 text-text/60">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            <span className="text-sm font-semibold">Memuat grafik...</span>
+          </div>
+        ) : yearTransactions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-text/50">
+            <span className="text-4xl">📊</span>
+            <p className="text-sm font-semibold">
+              Belum ada transaksi pada tahun {selectedYear}.
+            </p>
+          </div>
+        ) : (
+          <div className="w-full h-72 sm:h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
+                <XAxis
+                  dataKey="bulan"
+                  tick={{ fontSize: 11, fill: "#6B7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "#6B7280" }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={72}
+                  tickFormatter={(value) => formatRpShort(Number(value))}
+                />
+                <Tooltip
+                  formatter={(value) => formatRp(Number(value))}
+                  labelFormatter={(label) => `Bulan ${label} ${selectedYear}`}
+                  contentStyle={{
+                    borderRadius: 12,
+                    border: "1px solid #E5E7EB",
+                    fontSize: 12,
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 12, fontWeight: 700 }} />
+                <Line
+                  type="monotone"
+                  dataKey="pemasukan"
+                  name="Pemasukan"
+                  stroke="#16a34a"
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="pengeluaran"
+                  name="Pengeluaran"
+                  stroke="#dc2626"
+                  strokeWidth={2.5}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Transaction List */}
@@ -260,7 +431,7 @@ export default function AdminKeuanganPage() {
               </div>
             )}
             <div className="p-4 bg-background border-t border-border/60 text-xs font-semibold text-text/70">
-              {filtered.length} transaksi dari database
+              {filtered.length} transaksi tahun {selectedYear}
             </div>
           </div>
         </div>
